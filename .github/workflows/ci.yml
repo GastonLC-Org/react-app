@@ -9,6 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Get npm cache directory
+        id: npm-cache-dir
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+      - uses: actions/cache@v3
+        id: npm-cache 
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - name: Use NodeJs
         uses: actions/setup-node@v1
         with:
@@ -21,7 +32,6 @@ jobs:
       - name: Build Project
         if: github.event_name == 'push'
         run: npm run build
-      - run: npm install -g surge
       - name: Deploy to Staging
         if: github.event_name == 'push'
         run: npx surge --project ./build --domain vacuous-wren.surge.sh
